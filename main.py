@@ -57,11 +57,53 @@ class CustomDate:
 			self.month = datetime.datetime.now().month
 		self.output_date = datetime.date(self.year, self.month, self.date)
 
-	# Method for getting date from keyword here
+	def getDate(self):
+		""" Converts keywords like "next monday", "this monday", "weekend" etc. into a valid date
 
+		"""
+		if self.user_input in words:
+			delta = words[self.user_input]
+			self.output_date += datetime.timedelta(delta)
+		else:
+			inp = self.user_input.split()
+			if len(inp) == 1:
+				if self.user_input in days:
+					self.output_date = self.next_weekday(self.output_date, days.index(self.user_input))
+				else:
+					self.errors = "Invalid Input"
+			elif len(inp) > 2:
+				self.errors = "Invalid Input"
+			else:
+				if prefix[inp[0]] == 0:
+					self.output_date = self.next_weekday(self.output_date, days.index(inp[1]))
+				elif prefix[inp[0]] == 1:
+					self.output_date = self.previous_weekday(self.output_date, days.index(inp[1]))
+				else:
+					self.output_date = self.next_weekday(self.output_date, days.index(inp[1]))
+					if days[datetime.datetime.today().weekday()] != inp[1]:
+						self.output_date = self.next_weekday(self.output_date, days.index(inp[1]))
 
-	# Method for getting date of next and previous weekday here
+	def next_weekday(self, d, weekday):
+		""" Gets the date of coming weekday
 
+			d: initial date
+			weekday: index of the weekday
+		"""
+		days_ahead = weekday - d.weekday()
+		if days_ahead <= 0:  # Target day already happened this week
+			days_ahead += 7
+		return d + datetime.timedelta(days_ahead)
+
+	def previous_weekday(self, d, weekday):
+		""" Gets the date of last weekday
+
+			d:  initial date
+			weekday: index of the weekday
+		"""
+		days_ahead = weekday - d.weekday()
+		if days_ahead >= 0:  # Target day already happened this week
+			days_ahead -= 7
+		return d + datetime.timedelta(days_ahead)
 
 
 if __name__ == '__main__':
@@ -69,5 +111,43 @@ if __name__ == '__main__':
 	user_input.replace(',', " ")
 	user_input = user_input.split()
 	user_input = [word for word in user_input if word != "of"]
-	# Write Code for Processing user input
+	query = list()
+	dates = list()
+	if len(user_input) < 3:
+		query.append(" ".join(user_input))
+	else:
+		tokens = wordpunct_tokenize(" ".join(user_input))
+		query = [" ".join(word) for word in ngrams(tokens, 1)]
+		query += [" ".join(word) for word in ngrams(tokens, 2)]
+		query += [" ".join(word) for word in ngrams(tokens, 3)]
+		query.sort(key=len, reverse=True)
+	while len(query) > 0:
+		try:
+			keyword = query[0]
+			d = CustomDate(keyword)
+			if d.output_date not in dates and d.errors != "Invalid Input":
+				temp, curr = wordpunct_tokenize(keyword), []
+				if len(temp) > 1:
+					curr = [" ".join(word) for word in ngrams(temp, 1)]
+				if len(temp) > 2:
+					curr += [" ".join(word) for word in ngrams(temp, 2)]
+				for ele in curr:
+					if ele in query:
+						query.remove(ele)
+				dates.append(d.output_date)
+				print(keyword, " => ", d.output_date)
+				# break
+			query.remove(keyword)
+		except Exception:
+			query.remove(keyword)
 
+'''
+Coded by:
+
+Saurabh Aggarwal
+Ankit Anand
+Hitesh Sagtani
+
+(Interns at ValueFirst Digital Media, Gurgaon)
+PRACTICE SCHOOL - 1 Project
+'''
